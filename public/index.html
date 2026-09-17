@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>URABA-PAIS - Prueba de backend</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+<h1>URABA-PAIS - Prueba de backend</h1>
+
+<!-- ===================== LOGIN ===================== -->
+<section id="seccionLogin">
+  <h2>Iniciar sesion</h2>
+  <label>Email: <input id="loginEmail" type="email"></label><br>
+  <label>Password: <input id="loginPassword" type="password"></label><br>
+  <button onclick="iniciarSesion()">Iniciar sesion</button>
+  <button onclick="registrarUsuario()">Crear cuenta (rol encuestador)</button>
+  <pre id="resultadoLogin"></pre>
+</section>
+
+<!-- ===================== APP (oculto hasta iniciar sesion) ===================== -->
+<section id="seccionApp" style="display:none">
+  <p>
+    Sesion: <span id="sesionInfo"></span>
+    <button onclick="cerrarSesion()">Cerrar sesion</button>
+  </p>
+  <hr>
+
+  <h2>1. Buscar o crear beneficiario</h2>
+  <label>Tipo documento: <input id="buscarTipoDoc" value="CC"></label>
+  <label>Numero documento: <input id="buscarNumDoc"></label>
+  <button onclick="buscarBeneficiario()">Buscar</button>
+  <pre id="resultadoBusqueda"></pre>
+
+  <div id="formCrear" style="display:none">
+    <h3>No existe. Completar registro:</h3>
+    <label>Nombres: <input id="crearNombres"></label><br>
+    <label>Sexo: <input id="crearSexo"></label><br>
+    <label>Edad: <input id="crearEdad" type="number"></label><br>
+    <label>Municipio: <input id="crearMunicipio"></label><br>
+    <label>Zona: <input id="crearZona"></label><br>
+    <label>Nacionalidad: <input id="crearNacionalidad"></label><br>
+    <label>Tipo poblacion: <input id="crearTipoPoblacion"></label><br>
+    <label>Autorizacion datos: <input id="crearAutorizacion" type="checkbox"></label><br>
+    <button onclick="crearBeneficiario()">Crear beneficiario</button>
+  </div>
+
+  <p><strong>Beneficiario activo:</strong> <span id="beneficiarioActivo">ninguno</span></p>
+
+  <h2>2. Agregar familiar</h2>
+  <label>Nombres: <input id="famNombres"></label>
+  <label>Parentesco: <input id="famParentesco"></label>
+  <label>Fecha nacimiento: <input id="famFechaNacimiento" type="date"></label>
+  <button onclick="agregarFamiliar()">Agregar familiar</button>
+  <pre id="resultadoFamiliar"></pre>
+
+  <h2>3. Agregar participacion</h2>
+  <label>Programa:
+    <select id="partPrograma"></select>
+  </label>
+  <button onclick="cargarProgramas()">Recargar programas</button><br>
+  <label>Organizacion: <input id="partOrganizacion"></label>
+  <label>Fecha vinculacion: <input id="partFecha" type="date"></label>
+  <label>Estado:
+    <select id="partEstado">
+      <option value="inscrito">inscrito</option>
+      <option value="en_proceso">en_proceso</option>
+      <option value="finalizado">finalizado</option>
+      <option value="retirado">retirado</option>
+    </select>
+  </label><br>
+  <button onclick="crearParticipacion()">Agregar participacion</button>
+  <pre id="resultadoParticipacion"></pre>
+
+  <h2>4. Agregar atencion/ayuda (lo que YA se entrego)</h2>
+  <label>Tipo:
+    <select id="atTipo">
+      <option value="Ayuda">Ayuda</option>
+      <option value="Atención">Atención</option>
+    </select>
+  </label>
+  <label>Fecha: <input id="atFecha" type="date"></label><br>
+  <label>Descripcion: <input id="atDescripcion"></label><br>
+  <label>Responsable: <input id="atResponsable"></label><br>
+  <label>Resultado: <input id="atResultado"></label><br>
+  <button onclick="crearAtencion()">Agregar atencion</button>
+  <pre id="resultadoAtencion"></pre>
+
+  <h2>5. Agregar seguimiento (como va el caso)</h2>
+  <label>Fecha: <input id="segFecha" type="date"></label><br>
+  <label>Avance / novedad: <input id="segAvance"></label><br>
+  <label>Observacion: <input id="segObservacion"></label><br>
+  <label>Accion pendiente: <input id="segAccionPendiente"></label><br>
+  <label>Proximo contacto: <input id="segProximoContacto" type="date"></label><br>
+  <button onclick="crearSeguimiento()">Agregar seguimiento</button>
+  <pre id="resultadoSeguimiento"></pre>
+
+  <h2>6. Ficha consolidada del beneficiario activo</h2>
+  <button onclick="verFicha()">Ver ficha</button>
+  <pre id="resultadoFicha"></pre>
+
+  <section id="seccionAdmin" style="display:none">
+    <h2>7. Indicadores (solo administrador)</h2>
+    <button onclick="verIndicadores()">Cargar indicadores</button>
+    <table border="1" id="tablaIndicadores">
+      <tr><th>Indicador</th><th>Valor</th></tr>
+    </table>
+  </section>
+</section>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAriivqYUBK6VXindleJUoWP9fVRJi5PEQ",
+  authDomain: "uraba-pais-447f8.firebaseapp.com",
+  projectId: "uraba-pais-447f8",
+};
+firebase.initializeApp(firebaseConfig);
+
+let beneficiarioActivo = null; // { id, codigo_interno, nombres, tipo_documento, numero_documento }
+let rolActual = null;
+
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (user) {
+    document.getElementById("seccionLogin").style.display = "none";
+    document.getElementById("seccionApp").style.display = "block";
+
+    // Auto-provisiona el documento de rol la primera vez (siempre "encuestador").
+    await llamar("/api/usuarios/registrar", { method: "POST" });
+    const { data } = await llamar("/api/usuarios/me");
+    rolActual = data.rol;
+
+    document.getElementById("sesionInfo").textContent = `${user.email} (rol: ${rolActual})`;
+    document.getElementById("seccionAdmin").style.display = rolActual === "administrador" ? "block" : "none";
+
+    cargarProgramas();
+  } else {
+    document.getElementById("seccionLogin").style.display = "block";
+    document.getElementById("seccionApp").style.display = "none";
+  }
+});
+
+async function iniciarSesion() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, password);
+    document.getElementById("resultadoLogin").textContent = "Sesion iniciada.";
+  } catch (err) {
+    document.getElementById("resultadoLogin").textContent = "Error: " + err.message;
+  }
+}
+
+async function registrarUsuario() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+  try {
+    await firebase.auth().createUserWithEmailAndPassword(email, password);
+    document.getElementById("resultadoLogin").textContent = "Cuenta creada e iniciada, rol por defecto: encuestador.";
+  } catch (err) {
+    document.getElementById("resultadoLogin").textContent = "Error: " + err.message;
+  }
+}
+
+function cerrarSesion() {
+  firebase.auth().signOut();
+  beneficiarioActivo = null;
+  rolActual = null;
+}
+
+// El token nunca se pega a mano: se pide fresco al SDK en cada llamada, y
+// Firebase lo renueva solo cuando esta por expirar.
+async function llamar(url, options = {}) {
+  const headers = options.headers || {};
+  const user = firebase.auth().currentUser;
+  if (user) {
+    headers["Authorization"] = "Bearer " + (await user.getIdToken());
+  }
+  if (options.body) headers["Content-Type"] = "application/json";
+  const res = await fetch(url, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+  return { status: res.status, data };
+}
+
+function mostrarBeneficiarioActivo() {
+  const span = document.getElementById("beneficiarioActivo");
+  if (!beneficiarioActivo) {
+    span.textContent = "ninguno";
+    return;
+  }
+  span.textContent = `${beneficiarioActivo.nombres} (codigo interno: ${beneficiarioActivo.codigo_interno}, doc: ${beneficiarioActivo.tipo_documento} ${beneficiarioActivo.numero_documento})`;
+}
+
+async function buscarBeneficiario() {
+  const tipo_documento = document.getElementById("buscarTipoDoc").value;
+  const numero_documento = document.getElementById("buscarNumDoc").value;
+  const { data } = await llamar(`/api/beneficiarios/buscar?tipo_documento=${encodeURIComponent(tipo_documento)}&numero_documento=${encodeURIComponent(numero_documento)}`);
+
+  document.getElementById("resultadoBusqueda").textContent = JSON.stringify(data, null, 2);
+
+  if (data.encontrado) {
+    beneficiarioActivo = data.beneficiario;
+    beneficiarioActivo.id = data.beneficiario.id;
+    document.getElementById("formCrear").style.display = "none";
+  } else {
+    beneficiarioActivo = null;
+    document.getElementById("formCrear").style.display = "block";
+  }
+  mostrarBeneficiarioActivo();
+}
+
+async function crearBeneficiario() {
+  const body = {
+    tipo_documento: document.getElementById("buscarTipoDoc").value,
+    numero_documento: document.getElementById("buscarNumDoc").value,
+    nombres: document.getElementById("crearNombres").value,
+    sexo: document.getElementById("crearSexo").value,
+    edad: Number(document.getElementById("crearEdad").value) || null,
+    municipio: document.getElementById("crearMunicipio").value,
+    zona: document.getElementById("crearZona").value,
+    nacionalidad: document.getElementById("crearNacionalidad").value,
+    tipo_poblacion: document.getElementById("crearTipoPoblacion").value,
+    autorizacion_datos: document.getElementById("crearAutorizacion").checked,
+  };
+  const { status, data } = await llamar("/api/beneficiarios", { method: "POST", body: JSON.stringify(body) });
+  document.getElementById("resultadoBusqueda").textContent = status + "\n" + JSON.stringify(data, null, 2);
+
+  if (status === 201) {
+    beneficiarioActivo = data;
+    document.getElementById("formCrear").style.display = "none";
+  } else if (status === 409) {
+    beneficiarioActivo = data.beneficiario;
+  }
+  mostrarBeneficiarioActivo();
+}
+
+function idActivo() {
+  if (!beneficiarioActivo) {
+    alert("Primero busca o crea un beneficiario.");
+    return null;
+  }
+  return beneficiarioActivo.id;
+}
+
+async function agregarFamiliar() {
+  const id = idActivo();
+  if (!id) return;
+  const body = {
+    nombres: document.getElementById("famNombres").value,
+    parentesco: document.getElementById("famParentesco").value,
+    fecha_nacimiento: document.getElementById("famFechaNacimiento").value,
+  };
+  const { status, data } = await llamar(`/api/beneficiarios/${id}/familiares`, { method: "POST", body: JSON.stringify(body) });
+  document.getElementById("resultadoFamiliar").textContent = status + "\n" + JSON.stringify(data, null, 2);
+}
+
+async function cargarProgramas() {
+  const { data } = await llamar("/api/programas");
+  const select = document.getElementById("partPrograma");
+  select.innerHTML = "";
+  (Array.isArray(data) ? data : []).forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    select.appendChild(opt);
+  });
+}
+
+async function crearParticipacion() {
+  const id = idActivo();
+  if (!id) return;
+  const body = {
+    programa_id: document.getElementById("partPrograma").value,
+    organizacion: document.getElementById("partOrganizacion").value,
+    fecha_vinculacion: document.getElementById("partFecha").value,
+    estado: document.getElementById("partEstado").value,
+  };
+  const { status, data } = await llamar(`/api/beneficiarios/${id}/participaciones`, { method: "POST", body: JSON.stringify(body) });
+  document.getElementById("resultadoParticipacion").textContent = status + "\n" + JSON.stringify(data, null, 2);
+}
+
+async function crearAtencion() {
+  const id = idActivo();
+  if (!id) return;
+  const body = {
+    tipo: document.getElementById("atTipo").value,
+    fecha: document.getElementById("atFecha").value,
+    descripcion: document.getElementById("atDescripcion").value,
+    responsable: document.getElementById("atResponsable").value,
+    resultado: document.getElementById("atResultado").value,
+  };
+  const { status, data } = await llamar(`/api/beneficiarios/${id}/atenciones`, { method: "POST", body: JSON.stringify(body) });
+  document.getElementById("resultadoAtencion").textContent = status + "\n" + JSON.stringify(data, null, 2);
+}
+
+async function crearSeguimiento() {
+  const id = idActivo();
+  if (!id) return;
+  const body = {
+    fecha: document.getElementById("segFecha").value,
+    avance_novedad: document.getElementById("segAvance").value,
+    observacion: document.getElementById("segObservacion").value,
+    accion_pendiente: document.getElementById("segAccionPendiente").value,
+    proximo_contacto: document.getElementById("segProximoContacto").value,
+  };
+  const { status, data } = await llamar(`/api/beneficiarios/${id}/seguimientos`, { method: "POST", body: JSON.stringify(body) });
+  document.getElementById("resultadoSeguimiento").textContent = status + "\n" + JSON.stringify(data, null, 2);
+}
+
+async function verFicha() {
+  const id = idActivo();
+  if (!id) return;
+  const { data } = await llamar(`/api/beneficiarios/${id}/ficha`);
+  document.getElementById("resultadoFicha").textContent = JSON.stringify(data, null, 2);
+}
+
+async function verIndicadores() {
+  const { data } = await llamar("/api/reportes/indicadores");
+  const tabla = document.getElementById("tablaIndicadores");
+  tabla.innerHTML = "<tr><th>Indicador</th><th>Valor</th></tr>";
+  for (const [clave, valor] of Object.entries(data)) {
+    const fila = tabla.insertRow();
+    fila.insertCell().textContent = clave;
+    fila.insertCell().textContent = typeof valor === "object" ? JSON.stringify(valor) : valor;
+  }
+}
+</script>
+</body>
+</html>

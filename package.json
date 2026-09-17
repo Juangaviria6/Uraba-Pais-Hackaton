@@ -1,0 +1,17 @@
+{
+  "name": "uraba-pais-backend",
+  "version": "1.0.0",
+  "description": "Backend prototipo para URABA-PAIS - gestion de beneficiarios, programas, atenciones y seguimientos",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "token": "node scripts/generar-token.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.7.0"
+  }
+}
