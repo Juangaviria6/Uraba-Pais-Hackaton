@@ -32,6 +32,15 @@ $env:GOOGLE_CLOUD_PROJECT = "tu-proyecto-id"
 $env:FIREBASE_PROJECT_ID = "tu-proyecto-id"
 ```
 
+Para que la pagina de prueba (`public/index.html`) pueda iniciar sesion con
+Firebase Auth, tambien define el Web API key del proyecto (Firebase Console >
+Configuracion del proyecto > General > apiKey). El servidor lo expone al
+frontend estatico via `GET /api/config`, nunca hardcodeado en el HTML:
+
+```
+$env:FIREBASE_WEB_API_KEY = "tu-web-api-key"
+```
+
 Opcional: `PORT` (por defecto `3000`).
 
 ## Correr el servidor

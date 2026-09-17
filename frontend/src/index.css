@@ -2,8 +2,10 @@
   --color-verde: #2e8b57;
   --color-verde-oscuro: #236940;
   --color-azul: #1d4e89;
+  --color-azul-oscuro: #163c68;
   --color-blanco: #ffffff;
   --color-gris-claro: #f5f7f6;
+  --color-gris-medio: #e4e7ea;
   --color-texto: #1e2a24;
   --color-borde: #dbe3df;
   --color-error: #b3261e;
@@ -11,6 +13,7 @@
   --color-exito-bg: #e8f3ec;
 
   --fuente: system-ui, "Segoe UI", Roboto, sans-serif;
+  --fuente-marca: "Cormorant Garamond", "Times New Roman", serif;
   --radio: 8px;
   --sombra: 0 1px 3px rgba(30, 42, 36, 0.12);
 
@@ -169,7 +172,7 @@ label {
 }
 
 .encabezado-app {
-  background: var(--color-verde);
+  background: var(--color-azul);
   color: var(--color-blanco);
 }
 
@@ -184,9 +187,16 @@ label {
   gap: 10px;
 }
 
+.marca-uraba-pais {
+  font-family: var(--fuente-marca);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
 .encabezado-app__titulo {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
+  color: var(--color-blanco);
 }
 
 .encabezado-app__sesion {
@@ -197,8 +207,17 @@ label {
   flex-wrap: wrap;
 }
 
+.encabezado-app button.secundario {
+  color: var(--color-blanco);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.encabezado-app button.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .nav-app {
-  background: var(--color-verde-oscuro);
+  background: var(--color-azul-oscuro);
 }
 
 .nav-app__contenido {
@@ -281,5 +300,62 @@ label {
   .nav-app__contenido {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+.pie-institucional {
+  background: var(--color-blanco);
+  border-top: 1px solid var(--color-borde);
+  padding: 24px 16px 28px;
+  margin-top: auto;
+}
+
+.pie-institucional__contenido {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pie-institucional__grupo {
+  text-align: center;
+}
+
+.pie-institucional__etiqueta {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7a73;
+  margin-bottom: 10px;
+}
+
+.pie-institucional__logos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.pie-institucional__logos img {
+  height: 34px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  filter: grayscale(1) opacity(0.75);
+  transition: filter 0.15s ease;
+}
+
+.pie-institucional__logos img:hover {
+  filter: grayscale(0) opacity(1);
+}
+
+@media (max-width: 480px) {
+  .pie-institucional__logos {
+    gap: 16px;
+  }
+  .pie-institucional__logos img {
+    height: 28px;
   }
 }

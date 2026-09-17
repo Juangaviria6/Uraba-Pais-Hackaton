@@ -20,6 +20,19 @@ app.use("/api/usuarios", usuariosRoutes);
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
+// Config publica del SDK cliente de Firebase para la pagina de prueba
+// (public/index.html). No son datos sensibles (el apiKey de Firebase es
+// publico por diseno), pero viven en variables de entorno para no
+// hardcodearlas en el HTML.
+app.get("/api/config", (req, res) => {
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID;
+  res.json({
+    apiKey: process.env.FIREBASE_WEB_API_KEY || null,
+    authDomain: projectId ? `${projectId}.firebaseapp.com` : null,
+    projectId: projectId || null,
+  });
+});
+
 // 404 para rutas de API no encontradas
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });

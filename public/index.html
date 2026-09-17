@@ -40,6 +40,7 @@
     <label>Edad: <input id="crearEdad" type="number"></label><br>
     <label>Municipio: <input id="crearMunicipio"></label><br>
     <label>Zona: <input id="crearZona"></label><br>
+    <label>Contacto (telefono): <input id="crearContacto"></label><br>
     <label>Nacionalidad: <input id="crearNacionalidad"></label><br>
     <label>Tipo poblacion: <input id="crearTipoPoblacion"></label><br>
     <label>Autorizacion datos: <input id="crearAutorizacion" type="checkbox"></label><br>
@@ -110,35 +111,47 @@
 </section>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAriivqYUBK6VXindleJUoWP9fVRJi5PEQ",
-  authDomain: "uraba-pais-447f8.firebaseapp.com",
-  projectId: "uraba-pais-447f8",
-};
-firebase.initializeApp(firebaseConfig);
-
 let beneficiarioActivo = null; // { id, codigo_interno, nombres, tipo_documento, numero_documento }
 let rolActual = null;
 
-firebase.auth().onAuthStateChanged(async (user) => {
-  if (user) {
-    document.getElementById("seccionLogin").style.display = "none";
-    document.getElementById("seccionApp").style.display = "block";
+// La config del SDK cliente de Firebase viene de variables de entorno del
+// backend (GET /api/config), no esta hardcodeada aqui.
+async function iniciarFirebase() {
+  const res = await fetch("/api/config");
+  const firebaseConfig = await res.json();
 
-    // Auto-provisiona el documento de rol la primera vez (siempre "encuestador").
-    await llamar("/api/usuarios/registrar", { method: "POST" });
-    const { data } = await llamar("/api/usuarios/me");
-    rolActual = data.rol;
-
-    document.getElementById("sesionInfo").textContent = `${user.email} (rol: ${rolActual})`;
-    document.getElementById("seccionAdmin").style.display = rolActual === "administrador" ? "block" : "none";
-
-    cargarProgramas();
-  } else {
-    document.getElementById("seccionLogin").style.display = "block";
-    document.getElementById("seccionApp").style.display = "none";
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      '<p style="background:#fbeceb;color:#b3261e;padding:10px">Falta configurar FIREBASE_WEB_API_KEY y/o GOOGLE_CLOUD_PROJECT en el servidor.</p>'
+    );
+    return;
   }
-});
+
+  firebase.initializeApp(firebaseConfig);
+
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+      document.getElementById("seccionLogin").style.display = "none";
+      document.getElementById("seccionApp").style.display = "block";
+
+      // Auto-provisiona el documento de rol la primera vez (siempre "encuestador").
+      await llamar("/api/usuarios/registrar", { method: "POST" });
+      const { data } = await llamar("/api/usuarios/me");
+      rolActual = data.rol;
+
+      document.getElementById("sesionInfo").textContent = `${user.email} (rol: ${rolActual})`;
+      document.getElementById("seccionAdmin").style.display = rolActual === "administrador" ? "block" : "none";
+
+      cargarProgramas();
+    } else {
+      document.getElementById("seccionLogin").style.display = "block";
+      document.getElementById("seccionApp").style.display = "none";
+    }
+  });
+}
+
+iniciarFirebase();
 
 async function iniciarSesion() {
   const email = document.getElementById("loginEmail").value;
@@ -218,6 +231,7 @@ async function crearBeneficiario() {
     edad: Number(document.getElementById("crearEdad").value) || null,
     municipio: document.getElementById("crearMunicipio").value,
     zona: document.getElementById("crearZona").value,
+    contacto: document.getElementById("crearContacto").value,
     nacionalidad: document.getElementById("crearNacionalidad").value,
     tipo_poblacion: document.getElementById("crearTipoPoblacion").value,
     autorizacion_datos: document.getElementById("crearAutorizacion").checked,

@@ -13,6 +13,7 @@ const CAMPOS_INICIALES: NuevoBeneficiario = {
   edad: null,
   municipio: "",
   zona: "",
+  contacto: "",
   nacionalidad: "",
   tipo_poblacion: "",
   autorizacion_datos: false,
@@ -175,6 +176,13 @@ export function BeneficiariosSearchPage() {
                 <input
                   value={datosNuevo.zona ?? ""}
                   onChange={(e) => setDatosNuevo({ ...datosNuevo, zona: e.target.value })}
+                />
+              </label>
+              <label>
+                Contacto (telefono)
+                <input
+                  value={datosNuevo.contacto ?? ""}
+                  onChange={(e) => setDatosNuevo({ ...datosNuevo, contacto: e.target.value })}
                 />
               </label>
               <label>

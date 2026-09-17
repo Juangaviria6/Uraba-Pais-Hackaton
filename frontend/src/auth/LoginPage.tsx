@@ -33,7 +33,11 @@ export function LoginPage() {
   return (
     <div className="pagina" style={{ maxWidth: 420, marginTop: 60 }}>
       <div className="tarjeta">
-        <h1>URABA-PAIS</h1>
+        <div style={{ textAlign: "center" }}>
+          <h1 className="marca-uraba-pais" style={{ fontSize: "2rem", color: "var(--color-azul)", margin: "0 0 16px" }}>
+            Urabá País
+          </h1>
+        </div>
         <p className="texto-secundario" style={{ marginBottom: 20 }}>
           Ingresa con tu correo y contrasena para registrar y consultar beneficiarios.
         </p>

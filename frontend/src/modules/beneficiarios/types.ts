@@ -8,6 +8,7 @@ export type Beneficiario = {
   edad: number | null;
   municipio: string | null;
   zona: string | null;
+  contacto: string | null;
   nacionalidad: string | null;
   tipo_poblacion: string | null;
   autorizacion_datos: boolean;

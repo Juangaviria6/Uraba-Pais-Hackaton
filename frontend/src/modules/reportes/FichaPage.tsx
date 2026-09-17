@@ -60,6 +60,7 @@ export function FichaPage() {
         edad: datosEdicion.edad,
         municipio: datosEdicion.municipio,
         zona: datosEdicion.zona,
+        contacto: datosEdicion.contacto,
         nacionalidad: datosEdicion.nacionalidad,
         tipo_poblacion: datosEdicion.tipo_poblacion,
         autorizacion_datos: datosEdicion.autorizacion_datos,
@@ -120,6 +121,7 @@ export function FichaPage() {
             <p><strong>Edad:</strong> {ficha.edad ?? "-"}</p>
             <p><strong>Municipio:</strong> {ficha.municipio || "-"}</p>
             <p><strong>Zona:</strong> {ficha.zona || "-"}</p>
+            <p><strong>Contacto:</strong> {ficha.contacto || "-"}</p>
             <p><strong>Nacionalidad:</strong> {ficha.nacionalidad || "-"}</p>
             <p><strong>Poblacion:</strong> {ficha.tipo_poblacion || "-"}</p>
             <p><strong>Autorizacion de datos:</strong> {ficha.autorizacion_datos ? "Si" : "No"}</p>
@@ -163,6 +165,13 @@ export function FichaPage() {
                 <input
                   value={datosEdicion.zona ?? ""}
                   onChange={(e) => setDatosEdicion({ ...datosEdicion, zona: e.target.value })}
+                />
+              </label>
+              <label>
+                Contacto (telefono)
+                <input
+                  value={datosEdicion.contacto ?? ""}
+                  onChange={(e) => setDatosEdicion({ ...datosEdicion, contacto: e.target.value })}
                 />
               </label>
             </div>

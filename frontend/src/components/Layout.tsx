@@ -1,19 +1,21 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { PieInstitucional } from "./PieInstitucional";
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { usuario, rol, cerrarSesion } = useAuth();
+  const { usuario, rol, cargando, cerrarSesion } = useAuth();
 
   return (
     <>
       <header className="encabezado-app">
         <div className="encabezado-app__contenido">
-          <span className="encabezado-app__titulo">URABA-PAIS</span>
+          <span className="encabezado-app__titulo marca-uraba-pais">Urabá País</span>
           {usuario && (
             <div className="encabezado-app__sesion">
               <span>
-                {usuario.email} · {rol === "administrador" ? "Administrador" : "Encuestador"}
+                {usuario.email}
+                {!cargando && <> · {rol === "administrador" ? "Administrador" : "Encuestador"}</>}
               </span>
               <button className="secundario" onClick={() => cerrarSesion()}>
                 Cerrar sesion
@@ -39,6 +41,8 @@ export function Layout({ children }: { children: ReactNode }) {
       )}
 
       <main className="pagina">{children}</main>
+
+      <PieInstitucional />
     </>
   );
 }
