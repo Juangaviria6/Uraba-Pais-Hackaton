@@ -13,6 +13,8 @@ export type Beneficiario = {
   tipo_poblacion: string | null;
   autorizacion_datos: boolean;
   fecha_autorizacion: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 export type Familiar = {

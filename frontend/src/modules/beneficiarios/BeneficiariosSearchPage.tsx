@@ -9,6 +9,7 @@ import {
 } from "./offlineApi";
 import type { Beneficiario, BeneficiarioSinDocumento, NuevoBeneficiario } from "./types";
 import { MensajeError } from "../../components/EstadoCarga";
+import { useGeolocalizacion } from "../../hooks/useGeolocalizacion";
 
 const CAMPOS_INICIALES: NuevoBeneficiario = {
   tipo_documento: "CC",
@@ -23,6 +24,8 @@ const CAMPOS_INICIALES: NuevoBeneficiario = {
   tipo_poblacion: "",
   autorizacion_datos: false,
   fecha_autorizacion: "",
+  lat: null,
+  lng: null
 };
 
 // Lista de respaldo si aun no hay beneficiarios registrados (coleccion vacia)
@@ -39,6 +42,8 @@ export function BeneficiariosSearchPage() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [noEncontradoSinConexion, setNoEncontradoSinConexion] = useState(false);
   const [encontrado, setEncontrado] = useState<Beneficiario | null>(null);
+  const { coordenadas, obteniendo, obtenerUbicacion } = useGeolocalizacion();
+
   const [encontradoSinConexion, setEncontradoSinConexion] = useState(false);
 
   const [datosNuevo, setDatosNuevo] = useState<NuevoBeneficiario>(CAMPOS_INICIALES);
@@ -332,11 +337,21 @@ export function BeneficiariosSearchPage() {
 
             {errorCreacion && <MensajeError texto={errorCreacion} />}
 
+            <button type="button" className="secundario" onClick={obtenerUbicacion} disabled={obteniendo}>
+              {obteniendo ? "Obteniendo ubicacion..." : "Usar mi ubicacion actual"}
+            </button>
+            {coordenadas && (
+              <p className="texto-secundario">
+                Lat: {coordenadas.lat.toFixed(5)}, Lng: {coordenadas.lng.toFixed(5)}
+              </p>
+            )}
+            
             <div className="acciones">
               <button type="submit" disabled={creando}>
                 {creando ? "Registrando..." : "Registrar beneficiario"}
               </button>
             </div>
+
           </form>
         </div>
       )}
