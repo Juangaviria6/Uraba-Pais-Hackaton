@@ -24,29 +24,56 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 type MeResponse = { uid: string; email: string | null; rol: Rol };
 
+// El rol se guarda localmente para que, al abrir la app sin conexion con una
+// sesion de Firebase Auth ya persistida (Firebase si funciona sin red), no
+// se pierda el rol solo porque /usuarios/me no se pudo consultar.
+function claveRol(uid: string) {
+  return `uraba-pais:rol:${uid}`;
+}
+
+function leerRolCacheado(uid: string): Rol {
+  const valor = localStorage.getItem(claveRol(uid));
+  return valor === "administrador" || valor === "encuestador" ? valor : null;
+}
+
+function guardarRolCacheado(uid: string, rol: Rol) {
+  if (rol) localStorage.setItem(claveRol(uid), rol);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<User | null>(null);
   const [rol, setRol] = useState<Rol>(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Firebase restaura la sesion guardada localmente sin necesitar red,
+      // asi que en cuanto Firebase responde ya se puede dejar pasar al
+      // usuario: no hay que esperar a /usuarios/me para saber si hay sesion.
       setUsuario(user);
+      setCargando(false);
 
-      if (user) {
+      if (!user) {
+        setRol(null);
+        return;
+      }
+
+      // Rol optimista: el ultimo conocido en este dispositivo, mientras se
+      // confirma (o no) contra el servidor en segundo plano.
+      setRol(leerRolCacheado(user.uid));
+
+      (async () => {
         try {
           // Auto-provisiona el rol la primera vez (siempre "encuestador").
           await apiFetch("/usuarios/registrar", { method: "POST" });
           const info = await apiFetch<MeResponse>("/usuarios/me");
           setRol(info.rol);
+          guardarRolCacheado(user.uid, info.rol);
         } catch {
-          setRol(null);
+          // Sin conexion o con senal debil: se queda con el rol cacheado de
+          // arriba en vez de bloquear nada.
         }
-      } else {
-        setRol(null);
-      }
-
-      setCargando(false);
+      })();
     });
 
     return unsubscribe;

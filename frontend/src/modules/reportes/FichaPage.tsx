@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { obtenerFicha } from "./api";
+import { obtenerFichaOffline } from "./offlineApi";
 import type { Ficha } from "./types";
 import { actualizarBeneficiario, agregarFamiliar } from "../beneficiarios/api";
 import type { NuevoFamiliar } from "../beneficiarios/types";
@@ -15,6 +15,7 @@ export function FichaPage() {
   const navigate = useNavigate();
 
   const [ficha, setFicha] = useState<Ficha | null>(null);
+  const [sinConexion, setSinConexion] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,13 +28,21 @@ export function FichaPage() {
   const [guardandoFamiliar, setGuardandoFamiliar] = useState(false);
   const [mensajeFamiliar, setMensajeFamiliar] = useState<string | null>(null);
 
+  const aunSinSincronizar = id?.startsWith("local-") ?? false;
+
   async function cargar() {
     if (!id) return;
     setCargando(true);
     setError(null);
     try {
-      const [data, programasData] = await Promise.all([obtenerFicha(id), listarProgramas()]);
+      // La lista de programas solo es cosmetica aqui (nombre en vez de id);
+      // si falla por falta de conexion no debe impedir ver la ficha.
+      const [data, programasData] = await Promise.all([
+        obtenerFichaOffline(id),
+        listarProgramas().catch(() => [] as Programa[]),
+      ]);
       setFicha(data);
+      setSinConexion(Boolean(data._sinConexion));
       setDatosEdicion(data);
       setProgramas(programasData);
     } catch (err) {
@@ -107,10 +116,24 @@ export function FichaPage() {
         {ficha.codigo_interno && <> · codigo interno {ficha.codigo_interno}</>}
       </p>
 
+      {aunSinSincronizar && (
+        <div className="mensaje-error" style={{ marginBottom: 16 }}>
+          Este beneficiario se registro sin conexion y todavia no se ha sincronizado con el servidor. Se subira
+          automaticamente cuando haya internet. Mientras tanto no se puede editar, agregar familiares ni vincular
+          a programas, pero si se pueden registrar atenciones y seguimientos.
+        </div>
+      )}
+      {!aunSinSincronizar && sinConexion && (
+        <div className="mensaje-error" style={{ marginBottom: 16 }}>
+          Sin conexion: mostrando la ultima version guardada localmente de esta ficha. Los cambios que hagas ahora
+          se guardaran cuando vuelva la conexion.
+        </div>
+      )}
+
       <div className="tarjeta">
         <div className="acciones" style={{ justifyContent: "space-between" }}>
           <h2 style={{ margin: 0 }}>Datos basicos</h2>
-          <button className="secundario" onClick={() => setEditando(!editando)}>
+          <button className="secundario" onClick={() => setEditando(!editando)} disabled={aunSinSincronizar}>
             {editando ? "Cancelar" : "Editar"}
           </button>
         </div>
@@ -197,46 +220,50 @@ export function FichaPage() {
           ))}
         </ul>
 
-        <form className="formulario" onSubmit={guardarFamiliar}>
-          <div className="fila-campos">
-            <label>
-              Nombres
-              <input
-                value={nuevoFamiliar.nombres}
-                onChange={(e) => setNuevoFamiliar({ ...nuevoFamiliar, nombres: e.target.value })}
-                required
-              />
-            </label>
-            <label>
-              Parentesco
-              <input
-                value={nuevoFamiliar.parentesco}
-                onChange={(e) => setNuevoFamiliar({ ...nuevoFamiliar, parentesco: e.target.value })}
-                required
-              />
-            </label>
-            <label>
-              Fecha de nacimiento
-              <input
-                type="date"
-                value={nuevoFamiliar.fecha_nacimiento ?? ""}
-                onChange={(e) => setNuevoFamiliar({ ...nuevoFamiliar, fecha_nacimiento: e.target.value })}
-              />
-            </label>
-          </div>
-          {mensajeFamiliar && (
-            mensajeFamiliar.startsWith("Familiar agregado") ? (
-              <MensajeExito texto={mensajeFamiliar} />
-            ) : (
-              <MensajeError texto={mensajeFamiliar} />
-            )
-          )}
-          <div className="acciones">
-            <button type="submit" disabled={guardandoFamiliar}>
-              {guardandoFamiliar ? "Guardando..." : "Agregar familiar"}
-            </button>
-          </div>
-        </form>
+        {aunSinSincronizar ? (
+          <p className="texto-secundario">Podras agregar familiares cuando este beneficiario se sincronice.</p>
+        ) : (
+          <form className="formulario" onSubmit={guardarFamiliar}>
+            <div className="fila-campos">
+              <label>
+                Nombres
+                <input
+                  value={nuevoFamiliar.nombres}
+                  onChange={(e) => setNuevoFamiliar({ ...nuevoFamiliar, nombres: e.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Parentesco
+                <input
+                  value={nuevoFamiliar.parentesco}
+                  onChange={(e) => setNuevoFamiliar({ ...nuevoFamiliar, parentesco: e.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Fecha de nacimiento
+                <input
+                  type="date"
+                  value={nuevoFamiliar.fecha_nacimiento ?? ""}
+                  onChange={(e) => setNuevoFamiliar({ ...nuevoFamiliar, fecha_nacimiento: e.target.value })}
+                />
+              </label>
+            </div>
+            {mensajeFamiliar && (
+              mensajeFamiliar.startsWith("Familiar agregado") ? (
+                <MensajeExito texto={mensajeFamiliar} />
+              ) : (
+                <MensajeError texto={mensajeFamiliar} />
+              )
+            )}
+            <div className="acciones">
+              <button type="submit" disabled={guardandoFamiliar}>
+                {guardandoFamiliar ? "Guardando..." : "Agregar familiar"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       <div className="tarjeta">
@@ -253,9 +280,13 @@ export function FichaPage() {
             </li>
           ))}
         </ul>
-        <Link to={`/beneficiarios/${id}/participacion`}>
-          <button>Vincular a un programa / actualizar estado</button>
-        </Link>
+        {aunSinSincronizar ? (
+          <p className="texto-secundario">Podras vincularlo a programas cuando se sincronice.</p>
+        ) : (
+          <Link to={`/beneficiarios/${id}/participacion`}>
+            <button>Vincular a un programa / actualizar estado</button>
+          </Link>
+        )}
       </div>
 
       <div className="tarjeta">

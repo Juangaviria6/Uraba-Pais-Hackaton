@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { PieInstitucional } from "./PieInstitucional";
+import { EstadoConexion } from "./EstadoConexion";
 
 export function Layout({ children }: { children: ReactNode }) {
   const { usuario, rol, cargando, cerrarSesion } = useAuth();
@@ -24,6 +25,8 @@ export function Layout({ children }: { children: ReactNode }) {
           )}
         </div>
       </header>
+
+      <EstadoConexion />
 
       {usuario && (
         <nav className="nav-app">

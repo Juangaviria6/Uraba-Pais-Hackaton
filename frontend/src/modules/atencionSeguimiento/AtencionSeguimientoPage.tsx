@@ -1,13 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  agregarAtencion,
-  agregarSeguimiento,
-  listarAtenciones,
-  listarSeguimientos,
-} from "./api";
+import { agregarAtencionOffline, agregarSeguimientoOffline, listarPendientesDeBeneficiario } from "./offlineApi";
 import type { Atencion, NuevaAtencion, NuevoSeguimiento, Seguimiento } from "./types";
-import { obtenerBeneficiario } from "../beneficiarios/api";
+import { obtenerFichaOffline } from "../reportes/offlineApi";
 import type { Beneficiario } from "../beneficiarios/types";
 import { Cargando, MensajeError, MensajeExito } from "../../components/EstadoCarga";
 
@@ -54,14 +49,13 @@ export function AtencionSeguimientoPage() {
     setCargando(true);
     setError(null);
     try {
-      const [b, a, s] = await Promise.all([
-        obtenerBeneficiario(id),
-        listarAtenciones(id),
-        listarSeguimientos(id),
+      const [ficha, pendientes] = await Promise.all([
+        obtenerFichaOffline(id),
+        listarPendientesDeBeneficiario(id),
       ]);
-      setBeneficiario(b);
-      setAtenciones(a);
-      setSeguimientos(s);
+      setBeneficiario(ficha);
+      setAtenciones([...ficha.atenciones, ...pendientes.atenciones]);
+      setSeguimientos([...ficha.seguimientos, ...pendientes.seguimientos]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar la informacion");
     } finally {
@@ -80,8 +74,12 @@ export function AtencionSeguimientoPage() {
     setGuardandoAtencion(true);
     setMensajeAtencion(null);
     try {
-      await agregarAtencion(id, datosAtencion);
-      setMensajeAtencion("Atencion/ayuda registrada.");
+      const creada = await agregarAtencionOffline(id, datosAtencion);
+      setMensajeAtencion(
+        creada._pendienteSincronizacion
+          ? "Atencion/ayuda guardada en este dispositivo. Se sincronizara cuando haya conexion."
+          : "Atencion/ayuda registrada.",
+      );
       setDatosAtencion(ATENCION_INICIAL);
       await cargar();
     } catch (err) {
@@ -97,8 +95,12 @@ export function AtencionSeguimientoPage() {
     setGuardandoSeguimiento(true);
     setMensajeSeguimiento(null);
     try {
-      await agregarSeguimiento(id, datosSeguimiento);
-      setMensajeSeguimiento("Seguimiento registrado.");
+      const creado = await agregarSeguimientoOffline(id, datosSeguimiento);
+      setMensajeSeguimiento(
+        creado._pendienteSincronizacion
+          ? "Seguimiento guardado en este dispositivo. Se sincronizara cuando haya conexion."
+          : "Seguimiento registrado.",
+      );
       setDatosSeguimiento(SEGUIMIENTO_INICIAL);
       await cargar();
     } catch (err) {
@@ -112,16 +114,22 @@ export function AtencionSeguimientoPage() {
   if (error && !beneficiario) return <MensajeError texto={error} />;
   if (!beneficiario) return null;
 
+  function marcaPendiente(item: Atencion | Seguimiento) {
+    return (item as { _pendienteSincronizacion?: boolean })._pendienteSincronizacion
+      ? " (pendiente de sincronizar)"
+      : "";
+  }
+
   const linea: EventoLinea[] = [
     ...atenciones.map((a) => ({
       clase: "atencion" as const,
       fecha: a.fecha,
-      texto: `${a.tipo}: ${a.descripcion}${a.resultado ? ` — resultado: ${a.resultado}` : ""}`,
+      texto: `${a.tipo}: ${a.descripcion}${a.resultado ? ` — resultado: ${a.resultado}` : ""}${marcaPendiente(a)}`,
     })),
     ...seguimientos.map((s) => ({
       clase: "seguimiento" as const,
       fecha: s.fecha,
-      texto: `${s.avance_novedad}${s.accion_pendiente ? ` — pendiente: ${s.accion_pendiente}` : ""}`,
+      texto: `${s.avance_novedad}${s.accion_pendiente ? ` — pendiente: ${s.accion_pendiente}` : ""}${marcaPendiente(s)}`,
     })),
   ].sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
 
@@ -183,7 +191,7 @@ export function AtencionSeguimientoPage() {
           </label>
 
           {mensajeAtencion && (
-            mensajeAtencion.startsWith("Atencion/ayuda registrada") ? (
+            mensajeAtencion.startsWith("Atencion/ayuda") ? (
               <MensajeExito texto={mensajeAtencion} />
             ) : (
               <MensajeError texto={mensajeAtencion} />
@@ -245,7 +253,7 @@ export function AtencionSeguimientoPage() {
           </label>
 
           {mensajeSeguimiento && (
-            mensajeSeguimiento.startsWith("Seguimiento registrado") ? (
+            mensajeSeguimiento.startsWith("Seguimiento") ? (
               <MensajeExito texto={mensajeSeguimiento} />
             ) : (
               <MensajeError texto={mensajeSeguimiento} />

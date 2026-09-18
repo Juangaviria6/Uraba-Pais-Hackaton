@@ -171,6 +171,24 @@ label {
   font-size: 0.9rem;
 }
 
+.estado-conexion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  text-align: center;
+  background: var(--color-exito-bg);
+  color: var(--color-verde-oscuro);
+}
+
+.estado-conexion--offline {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
 .encabezado-app {
   background: var(--color-azul);
   color: var(--color-blanco);

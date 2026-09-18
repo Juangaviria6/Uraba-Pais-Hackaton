@@ -24,7 +24,14 @@ export function LoginPage() {
         await registrarse(email, password);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo iniciar sesion");
+      if ((err as { code?: string }).code === "auth/network-request-failed") {
+        setError(
+          "No hay conexion. La primera vez que inicias sesion en un dispositivo/navegador necesitas internet; " +
+            "despues de eso podras entrar sin conexion.",
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "No se pudo iniciar sesion");
+      }
     } finally {
       setEnviando(false);
     }

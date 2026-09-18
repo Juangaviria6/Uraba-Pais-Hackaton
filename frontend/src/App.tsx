@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
+import { iniciarSincronizacionAutomatica } from "./lib/syncEngine";
 import { LoginPage } from "./auth/LoginPage";
 import { ProtectedRoute, AdminRoute } from "./auth/ProtectedRoute";
 import { Layout } from "./components/Layout";
@@ -10,6 +12,10 @@ import { AtencionSeguimientoPage } from "./modules/atencionSeguimiento/AtencionS
 import { IndicadoresPage } from "./modules/reportes/IndicadoresPage";
 
 export default function App() {
+  useEffect(() => {
+    iniciarSincronizacionAutomatica();
+  }, []);
+
   return (
     <AuthProvider>
       <Layout>

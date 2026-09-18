@@ -24,3 +24,9 @@ export type Familiar = {
 
 export type NuevoBeneficiario = Omit<Beneficiario, "id" | "codigo_interno">;
 export type NuevoFamiliar = Omit<Familiar, "id">;
+
+export type BeneficiarioSinDocumento = {
+  id: string;
+  nombres: string;
+  municipio: string | null;
+};

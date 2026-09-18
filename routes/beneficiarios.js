@@ -8,6 +8,8 @@ const atencionesController = require("../controllers/atencionesController");
 const seguimientosController = require("../controllers/seguimientosController");
 
 // Modulo 1 - Beneficiarios y familias
+router.get("/tipos-documento", beneficiariosController.tiposDocumento);
+router.get("/sin-documento", beneficiariosController.listarSinDocumento);
 router.get("/buscar", beneficiariosController.buscar);
 router.post("/", requireAuth, beneficiariosController.crear);
 router.get("/:id", beneficiariosController.obtener);

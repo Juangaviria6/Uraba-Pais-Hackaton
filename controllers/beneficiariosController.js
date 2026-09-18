@@ -21,7 +21,14 @@ async function generarCodigoInterno() {
 }
 
 function validarBeneficiario(body) {
-  for (const campo of CAMPOS_REQUERIDOS) {
+  // Un beneficiario "SIN_DOCUMENTO" no tiene numero de documento por
+  // definicion, asi que ese campo deja de ser obligatorio en ese caso.
+  const camposRequeridos =
+    body.tipo_documento === "SIN_DOCUMENTO"
+      ? CAMPOS_REQUERIDOS.filter((campo) => campo !== "numero_documento")
+      : CAMPOS_REQUERIDOS;
+
+  for (const campo of camposRequeridos) {
     if (!body[campo] || String(body[campo]).trim() === "") {
       return `El campo "${campo}" es obligatorio`;
     }
@@ -33,6 +40,40 @@ function validarBeneficiario(body) {
     return 'El campo "autorizacion_datos" debe ser booleano';
   }
   return null;
+}
+
+// GET /api/beneficiarios/tipos-documento
+// Devuelve los valores de tipo_documento que ya existen en la coleccion, para
+// que el select de busqueda no oculte registros guardados con una convencion
+// distinta a la lista fija original (ej. "CC/Documento").
+async function tiposDocumento(req, res, next) {
+  try {
+    const snap = await beneficiarios.select("tipo_documento").get();
+    const valores = new Set();
+    snap.docs.forEach((doc) => {
+      const valor = doc.data().tipo_documento;
+      if (valor) valores.add(valor);
+    });
+    return res.json(Array.from(valores).sort());
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/beneficiarios/sin-documento
+// Lista los beneficiarios registrados sin numero de documento, ya que no se
+// pueden ubicar con la busqueda normal (tipo_documento + numero_documento).
+async function listarSinDocumento(req, res, next) {
+  try {
+    const snap = await beneficiarios.where("tipo_documento", "==", "SIN_DOCUMENTO").get();
+    const lista = snap.docs.map((doc) => {
+      const data = doc.data();
+      return { id: doc.id, nombres: data.nombres, municipio: data.municipio || null };
+    });
+    return res.json(lista);
+  } catch (err) {
+    next(err);
+  }
 }
 
 // GET /api/beneficiarios/buscar?tipo_documento=&numero_documento=
@@ -71,18 +112,22 @@ async function crear(req, res, next) {
 
     const { tipo_documento, numero_documento } = req.body;
 
-    const existente = await beneficiarios
-      .where("tipo_documento", "==", tipo_documento)
-      .where("numero_documento", "==", numero_documento)
-      .limit(1)
-      .get();
+    // Sin numero de documento no hay como detectar duplicados de forma
+    // confiable, asi que el chequeo solo aplica cuando si viene el dato.
+    if (numero_documento) {
+      const existente = await beneficiarios
+        .where("tipo_documento", "==", tipo_documento)
+        .where("numero_documento", "==", numero_documento)
+        .limit(1)
+        .get();
 
-    if (!existente.empty) {
-      const doc = existente.docs[0];
-      return res.status(409).json({
-        error: "Ya existe un beneficiario con ese tipo y numero de documento",
-        beneficiario: { id: doc.id, ...doc.data() },
-      });
+      if (!existente.empty) {
+        const doc = existente.docs[0];
+        return res.status(409).json({
+          error: "Ya existe un beneficiario con ese tipo y numero de documento",
+          beneficiario: { id: doc.id, ...doc.data() },
+        });
+      }
     }
 
     const codigo_interno = await generarCodigoInterno();
@@ -90,7 +135,7 @@ async function crear(req, res, next) {
     const nuevo = {
       codigo_interno,
       tipo_documento: req.body.tipo_documento,
-      numero_documento: req.body.numero_documento,
+      numero_documento: req.body.numero_documento || null,
       nombres: req.body.nombres,
       sexo: req.body.sexo || null,
       edad: req.body.edad ?? null,
@@ -247,6 +292,8 @@ async function ficha(req, res, next) {
 }
 
 module.exports = {
+  tiposDocumento,
+  listarSinDocumento,
   buscar,
   crear,
   obtener,
