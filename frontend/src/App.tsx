@@ -10,6 +10,7 @@ import { FichaPage } from "./modules/reportes/FichaPage";
 import { ParticipacionPage } from "./modules/participacion/ParticipacionPage";
 import { AtencionSeguimientoPage } from "./modules/atencionSeguimiento/AtencionSeguimientoPage";
 import { IndicadoresPage } from "./modules/reportes/IndicadoresPage";
+import { PaginaPublica } from "./modules/publico/PaginaPublica";
 
 export default function App() {
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
-          <Route path="/" element={<Navigate to="/beneficiarios" replace />} />
+          <Route path="/" element={<PaginaPublica />} />
 
           <Route
             path="/beneficiarios"
@@ -68,7 +69,7 @@ export default function App() {
             }
           />
 
-          <Route path="*" element={<Navigate to="/beneficiarios" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
     </AuthProvider>
