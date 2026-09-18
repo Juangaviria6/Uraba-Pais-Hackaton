@@ -73,6 +73,15 @@ export function IndicadoresPage() {
 
   return (
     <div>
+      <div className="pagina-encabezado">
+        <div>
+          <h1>Indicadores</h1>
+          <p className="texto-secundario" style={{ margin: 0 }}>
+            Consulta el avance y desempeño de los programas y proyectos de Urabá País.
+          </p>
+        </div>
+      </div>
+
       <div className="tablero-encabezado">
         <div>
           <h1 className="marca-uraba-pais tablero-encabezado__titulo">Tablero de indicadores</h1>

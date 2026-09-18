@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { normalizarDoc } = require("./utils");
 
 const beneficiarios = db.collection("beneficiarios");
 
@@ -32,7 +33,7 @@ async function crear(req, res, next) {
     const ref = await beneficiarioRef.collection("seguimientos").add(nuevo);
     const creado = await ref.get();
 
-    return res.status(201).json({ id: creado.id, ...creado.data() });
+    return res.status(201).json({ id: creado.id, ...normalizarDoc(creado.data()) });
   } catch (err) {
     next(err);
   }
@@ -48,7 +49,7 @@ async function listar(req, res, next) {
     }
 
     const snap = await beneficiarioRef.collection("seguimientos").get();
-    return res.json(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    return res.json(snap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) })));
   } catch (err) {
     next(err);
   }

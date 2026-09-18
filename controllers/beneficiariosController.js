@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { db, admin } = require("../config/firebase");
+const { normalizarDoc } = require("./utils");
 
 const beneficiarios = db.collection("beneficiarios");
 
@@ -96,7 +97,7 @@ async function buscar(req, res, next) {
     }
 
     const doc = snap.docs[0];
-    return res.json({ encontrado: true, beneficiario: { id: doc.id, ...doc.data() } });
+    return res.json({ encontrado: true, beneficiario: { id: doc.id, ...normalizarDoc(doc.data()) } });
   } catch (err) {
     next(err);
   }
@@ -125,7 +126,7 @@ async function crear(req, res, next) {
         const doc = existente.docs[0];
         return res.status(409).json({
           error: "Ya existe un beneficiario con ese tipo y numero de documento",
-          beneficiario: { id: doc.id, ...doc.data() },
+          beneficiario: { id: doc.id, ...normalizarDoc(doc.data()) },
         });
       }
     }
@@ -152,7 +153,7 @@ async function crear(req, res, next) {
     const ref = await beneficiarios.add(nuevo);
     const creado = await ref.get();
 
-    return res.status(201).json({ id: creado.id, ...creado.data() });
+    return res.status(201).json({ id: creado.id, ...normalizarDoc(creado.data()) });
   } catch (err) {
     next(err);
   }
@@ -165,7 +166,7 @@ async function obtener(req, res, next) {
     if (!doc.exists) {
       return res.status(404).json({ error: "Beneficiario no encontrado" });
     }
-    return res.json({ id: doc.id, ...doc.data() });
+    return res.json({ id: doc.id, ...normalizarDoc(doc.data()) });
   } catch (err) {
     next(err);
   }
@@ -209,7 +210,7 @@ async function actualizar(req, res, next) {
     await ref.update(actualizacion);
     const actualizado = await ref.get();
 
-    return res.json({ id: actualizado.id, ...actualizado.data() });
+    return res.json({ id: actualizado.id, ...normalizarDoc(actualizado.data()) });
   } catch (err) {
     next(err);
   }
@@ -238,7 +239,7 @@ async function agregarFamiliar(req, res, next) {
     const familiarRef = await ref.collection("familiares").add(familiar);
     const creado = await familiarRef.get();
 
-    return res.status(201).json({ id: creado.id, ...creado.data() });
+    return res.status(201).json({ id: creado.id, ...normalizarDoc(creado.data()) });
   } catch (err) {
     next(err);
   }
@@ -254,7 +255,7 @@ async function listarFamiliares(req, res, next) {
     }
 
     const snap = await ref.collection("familiares").get();
-    const familiares = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const familiares = snap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) }));
 
     return res.json(familiares);
   } catch (err) {
@@ -280,11 +281,11 @@ async function ficha(req, res, next) {
 
     return res.json({
       id: doc.id,
-      ...doc.data(),
-      familiares: familiaresSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
-      participaciones: participacionesSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
-      atenciones: atencionesSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
-      seguimientos: seguimientosSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      ...normalizarDoc(doc.data()),
+      familiares: familiaresSnap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) })),
+      participaciones: participacionesSnap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) })),
+      atenciones: atencionesSnap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) })),
+      seguimientos: seguimientosSnap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) })),
     });
   } catch (err) {
     next(err);

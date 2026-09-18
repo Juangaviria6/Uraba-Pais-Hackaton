@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { normalizarDoc } = require("./utils");
 
 const programas = db.collection("programas");
 
@@ -6,7 +7,7 @@ const programas = db.collection("programas");
 async function listar(req, res, next) {
   try {
     const snap = await programas.get();
-    const lista = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const lista = snap.docs.map((d) => ({ id: d.id, ...normalizarDoc(d.data()) }));
     return res.json(lista);
   } catch (err) {
     next(err);
@@ -25,7 +26,7 @@ async function crear(req, res, next) {
     const ref = await programas.add(nuevo);
     const creado = await ref.get();
 
-    return res.status(201).json({ id: creado.id, ...creado.data() });
+    return res.status(201).json({ id: creado.id, ...normalizarDoc(creado.data()) });
   } catch (err) {
     next(err);
   }

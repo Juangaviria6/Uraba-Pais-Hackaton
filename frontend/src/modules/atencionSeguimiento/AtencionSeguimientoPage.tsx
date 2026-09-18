@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { agregarAtencionOffline, agregarSeguimientoOffline, listarPendientesDeBeneficiario } from "./offlineApi";
+import { agregarEvidenciaAtencion, agregarEvidenciaSeguimiento } from "./api";
 import type { Atencion, NuevaAtencion, NuevoSeguimiento, Seguimiento } from "./types";
 import { obtenerFichaOffline } from "../reportes/offlineApi";
 import type { Beneficiario } from "../beneficiarios/types";
@@ -23,8 +24,8 @@ const SEGUIMIENTO_INICIAL: NuevoSeguimiento = {
 };
 
 type EventoLinea =
-  | { clase: "atencion"; fecha: string; texto: string }
-  | { clase: "seguimiento"; fecha: string; texto: string };
+  | { clase: "atencion"; fecha: string; texto: string; item: Atencion }
+  | { clase: "seguimiento"; fecha: string; texto: string; item: Seguimiento };
 
 export function AtencionSeguimientoPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +44,9 @@ export function AtencionSeguimientoPage() {
   const [datosSeguimiento, setDatosSeguimiento] = useState<NuevoSeguimiento>(SEGUIMIENTO_INICIAL);
   const [guardandoSeguimiento, setGuardandoSeguimiento] = useState(false);
   const [mensajeSeguimiento, setMensajeSeguimiento] = useState<string | null>(null);
+
+  const [subiendoEvidenciaId, setSubiendoEvidenciaId] = useState<string | null>(null);
+  const [errorEvidencia, setErrorEvidencia] = useState<string | null>(null);
 
   async function cargar() {
     if (!id) return;
@@ -110,6 +114,24 @@ export function AtencionSeguimientoPage() {
     }
   }
 
+  async function manejarSubirEvidencia(evento: EventoLinea, archivo: File) {
+    if (!id) return;
+    setErrorEvidencia(null);
+    setSubiendoEvidenciaId(evento.item.id);
+    try {
+      if (evento.clase === "atencion") {
+        await agregarEvidenciaAtencion(id, evento.item.id, archivo);
+      } else {
+        await agregarEvidenciaSeguimiento(id, evento.item.id, archivo);
+      }
+      await cargar();
+    } catch (err) {
+      setErrorEvidencia(err instanceof Error ? err.message : "No se pudo subir la evidencia");
+    } finally {
+      setSubiendoEvidenciaId(null);
+    }
+  }
+
   if (cargando) return <Cargando texto="Cargando historial..." />;
   if (error && !beneficiario) return <MensajeError texto={error} />;
   if (!beneficiario) return null;
@@ -120,16 +142,32 @@ export function AtencionSeguimientoPage() {
       : "";
   }
 
+  // Defensivo: la fecha deberia ser siempre un string "YYYY-MM-DD" (asi la
+  // guarda el backend y asi la envia <input type="date">), pero un registro
+  // cargado de otra forma (ej. editado a mano en la consola de Firestore)
+  // podria traer un Timestamp u otro tipo de dato. Sin esto, un solo
+  // registro con formato invalido tumba toda la pagina (React no puede
+  // renderizar un objeto directamente).
+  function comoTexto(valor: unknown): string {
+    if (typeof valor === "string") return valor;
+    if (valor && typeof valor === "object" && "_seconds" in valor) {
+      return new Date((valor as { _seconds: number })._seconds * 1000).toISOString().slice(0, 10);
+    }
+    return valor == null ? "" : String(valor);
+  }
+
   const linea: EventoLinea[] = [
     ...atenciones.map((a) => ({
       clase: "atencion" as const,
-      fecha: a.fecha,
+      fecha: comoTexto(a.fecha),
       texto: `${a.tipo}: ${a.descripcion}${a.resultado ? ` — resultado: ${a.resultado}` : ""}${marcaPendiente(a)}`,
+      item: a,
     })),
     ...seguimientos.map((s) => ({
       clase: "seguimiento" as const,
-      fecha: s.fecha,
+      fecha: comoTexto(s.fecha),
       texto: `${s.avance_novedad}${s.accion_pendiente ? ` — pendiente: ${s.accion_pendiente}` : ""}${marcaPendiente(s)}`,
+      item: s,
     })),
   ].sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
 
@@ -270,13 +308,57 @@ export function AtencionSeguimientoPage() {
 
       <div className="tarjeta">
         <h2>Historial cronologico</h2>
+        <p className="texto-secundario">
+          Puedes adjuntar fotos como evidencia de una atención/ayuda o seguimiento ya registrado.
+        </p>
+        {errorEvidencia && <MensajeError texto={errorEvidencia} />}
         {linea.length === 0 && <p className="texto-secundario">Aun no hay atenciones ni seguimientos.</p>}
         <div className="linea-tiempo">
-          {linea.map((evento, i) => (
-            <div key={i} className={`linea-tiempo__item ${evento.clase}`}>
-              <strong>{evento.fecha}</strong> — {evento.texto}
-            </div>
-          ))}
+          {linea.map((evento) => {
+            const pendienteDeSincronizar = Boolean(
+              (evento.item as { _pendienteSincronizacion?: boolean })._pendienteSincronizacion,
+            );
+            const subiendo = subiendoEvidenciaId === evento.item.id;
+            return (
+              <div key={evento.item.id} className={`linea-tiempo__item ${evento.clase}`}>
+                <div className="linea-tiempo__cuerpo">
+                  <strong>{evento.fecha}</strong> — {evento.texto}
+
+                  {evento.item.evidencias && evento.item.evidencias.length > 0 && (
+                    <div className="evidencias-galeria">
+                      {evento.item.evidencias.map((url) => (
+                        <a key={url} href={url} target="_blank" rel="noreferrer">
+                          <img src={url} alt="Evidencia adjunta" loading="lazy" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="linea-tiempo__accion">
+                  {pendienteDeSincronizar ? (
+                    <p className="texto-secundario" style={{ margin: 0 }}>
+                      Podrás adjuntar evidencia cuando este registro se sincronice.
+                    </p>
+                  ) : (
+                    <label className={`evidencias-subir ${subiendo ? "evidencias-subir--activo" : ""}`}>
+                      {subiendo ? "Subiendo..." : "+ Agregar evidencia"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={subiendo}
+                        onChange={(e) => {
+                          const archivo = e.target.files?.[0];
+                          e.target.value = "";
+                          if (archivo) manejarSubirEvidencia(evento, archivo);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

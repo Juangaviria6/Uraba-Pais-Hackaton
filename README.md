@@ -22,14 +22,28 @@ npm install
 
 ## Variable de entorno
 
-El proyecto de Google Cloud/Firebase se toma de una de estas variables (define
-al menos una antes de arrancar):
+La forma mas simple es copiar `.env.example` a `.env` (en la raiz del
+proyecto, junto a `package.json`) y completar los valores ahi. `.env` esta en
+`.gitignore`: nunca se sube al repositorio.
 
 ```
-# PowerShell
+cp .env.example .env
+```
+
+Si prefieres no usar un archivo, tambien puedes definir cada variable en la
+terminal antes de arrancar (dura solo esa sesion de PowerShell):
+
+```
 $env:GOOGLE_CLOUD_PROJECT = "tu-proyecto-id"
+```
+
+El proyecto de Google Cloud/Firebase se toma de una de estas variables (define
+al menos una):
+
+```
+GOOGLE_CLOUD_PROJECT=tu-proyecto-id
 # o
-$env:FIREBASE_PROJECT_ID = "tu-proyecto-id"
+FIREBASE_PROJECT_ID=tu-proyecto-id
 ```
 
 Para que la pagina de prueba (`public/index.html`) pueda iniciar sesion con
@@ -41,7 +55,35 @@ frontend estatico via `GET /api/config`, nunca hardcodeado en el HTML:
 $env:FIREBASE_WEB_API_KEY = "tu-web-api-key"
 ```
 
-Opcional: `PORT` (por defecto `3000`).
+Para el asistente virtual (chatbot, solo administradores), define tu API key
+de OpenAI:
+
+```
+$env:OPENAI_API_KEY = "sk-tu-api-key"
+```
+
+Para adjuntar evidencia fotografica a atenciones y seguimientos, define tus
+credenciales de Cloudinary (Dashboard > Account Details). La forma mas
+simple es la URL unica que Cloudinary ya te da armada:
+
+```
+$env:CLOUDINARY_URL = "cloudinary://<api_key>:<api_secret>@<cloud_name>"
+```
+
+o, si prefieres tres variables separadas:
+
+```
+$env:CLOUDINARY_CLOUD_NAME = "tu-cloud-name"
+$env:CLOUDINARY_API_KEY = "tu-api-key"
+$env:CLOUDINARY_API_SECRET = "tu-api-secret"
+```
+
+Opcional: `PORT` (por defecto `3000`), `OPENAI_MODEL` (por defecto
+`gpt-4o-mini`, un modelo economico y muy por debajo de GPT-5 en costo/tamano;
+tambien sirven `gpt-4.1-mini`, `gpt-4o`, `gpt-3.5-turbo`, etc.),
+`API_BASE_URL` (por defecto `http://localhost:$PORT/api`, la URL que el
+propio backend usa para llamarse a si mismo desde las herramientas del
+asistente).
 
 ## Correr el servidor
 
@@ -248,6 +290,17 @@ Listar seguimientos:
 curl http://localhost:3000/api/beneficiarios/$ID/seguimientos
 ```
 
+Adjuntar evidencia fotografica a una atencion o ayuda ya creada (componente
+complementario; reemplaza `ATENCION_ID` por el id que devolvio el POST de
+arriba). Es lo mismo para un seguimiento, cambiando `atenciones` por
+`seguimientos`:
+
+```
+curl -X POST http://localhost:3000/api/beneficiarios/$ID/atenciones/ATENCION_ID/evidencia \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "evidencia=@/ruta/a/la/foto.jpg"
+```
+
 ### Modulo 4 - Consultas y reportes
 
 Ficha consolidada:
@@ -279,6 +332,23 @@ Consultar el rol propio:
 curl http://localhost:3000/api/usuarios/me \
   -H "Authorization: Bearer $TOKEN"
 ```
+
+### Asistente virtual (chatbot, solo administrador)
+
+Responde preguntas sobre beneficiarios e indicadores usando las mismas rutas
+del backend (nunca accede a Firestore directamente), con el token del usuario
+que pregunta. Exige rol `administrador` (`requireAuth` + `requireAdmin`).
+
+```
+curl -X POST http://localhost:3000/api/chat \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"mensaje": "Resume el historial del beneficiario '"$ID"'", "historial": []}'
+```
+
+`historial` es la lista de mensajes previos de la conversacion (`[{"role": "user"|"assistant", "content": "..."}]`),
+vacia en el primer mensaje. El frontend (globo flotante, visible solo con
+rol administrador) la mantiene y la reenvia automaticamente.
 
 ## Notas
 

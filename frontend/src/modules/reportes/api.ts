@@ -6,5 +6,7 @@ export function obtenerFicha(beneficiarioId: string) {
 }
 
 export function obtenerIndicadores() {
-  return apiFetch<Indicadores>("/reportes/indicadores");
+  // Agrega varias consultas de Firestore (una por programa, en paralelo);
+  // con muchos programas puede tardar mas que el limite por defecto.
+  return apiFetch<Indicadores>("/reportes/indicadores", { tiempoLimiteMs: 20000 });
 }

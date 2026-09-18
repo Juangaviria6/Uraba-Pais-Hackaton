@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { normalizarDoc } = require("./utils");
 
 const beneficiarios = db.collection("beneficiarios");
 const programas = db.collection("programas");
@@ -41,7 +42,7 @@ async function crear(req, res, next) {
     const ref = await beneficiarioRef.collection("participaciones").add(nueva);
     const creada = await ref.get();
 
-    return res.status(201).json({ id: creada.id, ...creada.data() });
+    return res.status(201).json({ id: creada.id, ...normalizarDoc(creada.data()) });
   } catch (err) {
     next(err);
   }
@@ -68,7 +69,7 @@ async function actualizarEstado(req, res, next) {
     await participacionRef.update({ estado });
     const actualizada = await participacionRef.get();
 
-    return res.json({ id: actualizada.id, ...actualizada.data() });
+    return res.json({ id: actualizada.id, ...normalizarDoc(actualizada.data()) });
   } catch (err) {
     next(err);
   }

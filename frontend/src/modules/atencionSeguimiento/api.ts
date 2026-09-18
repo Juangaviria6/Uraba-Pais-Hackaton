@@ -22,3 +22,28 @@ export function agregarSeguimiento(beneficiarioId: string, datos: NuevoSeguimien
     body: datos,
   });
 }
+
+// Evidencia fotografica (componente complementario): se adjunta despues de
+// creado el registro, subiendo el archivo tal cual a Cloudinary a traves del
+// backend (nunca directo desde el navegador, asi la clave de Cloudinary
+// nunca sale del servidor). Solo aplica a registros con id real (no a los
+// que aun estan pendientes de sincronizar sin conexion).
+export function agregarEvidenciaAtencion(beneficiarioId: string, atencionId: string, archivo: File) {
+  const formData = new FormData();
+  formData.append("evidencia", archivo);
+  return apiFetch<Atencion>(`/beneficiarios/${beneficiarioId}/atenciones/${atencionId}/evidencia`, {
+    method: "POST",
+    body: formData,
+    tiempoLimiteMs: 30000,
+  });
+}
+
+export function agregarEvidenciaSeguimiento(beneficiarioId: string, seguimientoId: string, archivo: File) {
+  const formData = new FormData();
+  formData.append("evidencia", archivo);
+  return apiFetch<Seguimiento>(`/beneficiarios/${beneficiarioId}/seguimientos/${seguimientoId}/evidencia`, {
+    method: "POST",
+    body: formData,
+    tiempoLimiteMs: 30000,
+  });
+}

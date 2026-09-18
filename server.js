@@ -1,3 +1,9 @@
+// Carga las variables de entorno de un archivo .env en la raiz del proyecto
+// (si existe). Debe ser lo primero que corre el archivo: config/firebase.js,
+// config/cloudinary.js y controllers/chatController.js leen process.env en
+// cuanto se importan, asi que si esto corriera despues, ya seria tarde.
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -6,6 +12,7 @@ const beneficiariosRoutes = require("./routes/beneficiarios");
 const programasRoutes = require("./routes/programas");
 const reportesRoutes = require("./routes/reportes");
 const usuariosRoutes = require("./routes/usuarios");
+const chatRoutes = require("./routes/chat");
 
 const app = express();
 
@@ -17,6 +24,7 @@ app.use("/api/beneficiarios", beneficiariosRoutes);
 app.use("/api/programas", programasRoutes);
 app.use("/api/reportes", reportesRoutes);
 app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 

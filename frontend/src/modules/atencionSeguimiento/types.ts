@@ -7,9 +7,11 @@ export type Atencion = {
   descripcion: string;
   responsable: string | null;
   resultado: string | null;
+  // URLs de Cloudinary. Ausente/vacio hasta que se adjunte la primera foto.
+  evidencias?: string[];
 };
 
-export type NuevaAtencion = Omit<Atencion, "id">;
+export type NuevaAtencion = Omit<Atencion, "id" | "evidencias">;
 
 export type Seguimiento = {
   id: string;
@@ -18,6 +20,7 @@ export type Seguimiento = {
   observacion: string | null;
   accion_pendiente: string | null;
   proximo_contacto: string | null;
+  evidencias?: string[];
 };
 
-export type NuevoSeguimiento = Omit<Seguimiento, "id">;
+export type NuevoSeguimiento = Omit<Seguimiento, "id" | "evidencias">;

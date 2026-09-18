@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { normalizarDoc } = require("./utils");
 
 const usuarios = db.collection("usuarios");
 
@@ -32,7 +33,7 @@ async function registrar(req, res, next) {
     }
 
     const actualizado = await ref.get();
-    return res.json({ uid, ...actualizado.data() });
+    return res.json({ uid, ...normalizarDoc(actualizado.data()) });
   } catch (err) {
     next(err);
   }

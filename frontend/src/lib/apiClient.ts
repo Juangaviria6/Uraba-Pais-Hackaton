@@ -16,6 +16,10 @@ export class ApiError extends Error {
 type Opciones = {
   method?: "GET" | "POST" | "PUT";
   body?: unknown;
+  // Permite alargar el limite para llamadas que de por si tardan mas (ej. el
+  // asistente de IA, que encadena varias llamadas a OpenAI antes de
+  // responder). El resto de la app sigue usando TIEMPO_LIMITE_MS.
+  tiempoLimiteMs?: number;
 };
 
 // En senal debil (no necesariamente cero senal) un fetch puede quedarse
@@ -24,12 +28,12 @@ type Opciones = {
 // activarse — solo tarda demasiado en notar que no hay red.
 const TIEMPO_LIMITE_MS = 8000;
 
-function conLimiteDeTiempo<T>(promesa: Promise<T>, alAgotarse?: () => void): Promise<T> {
+function conLimiteDeTiempo<T>(promesa: Promise<T>, tiempoLimiteMs: number, alAgotarse?: () => void): Promise<T> {
   return new Promise((resolve, reject) => {
     const temporizador = setTimeout(() => {
       alAgotarse?.();
       reject(new Error("Se agoto el tiempo de espera (posiblemente sin conexion)"));
-    }, TIEMPO_LIMITE_MS);
+    }, tiempoLimiteMs);
 
     promesa.then(
       (valor) => {
@@ -44,18 +48,23 @@ function conLimiteDeTiempo<T>(promesa: Promise<T>, alAgotarse?: () => void): Pro
   });
 }
 
-// Cliente API compartido por los 4 modulos. Adjunta el ID token del usuario
+// Cliente API compartido por los modulos. Adjunta el ID token del usuario
 // autenticado en cada llamada (el SDK de Firebase lo renueva solo, nunca se
 // maneja ni se guarda a mano).
 export async function apiFetch<T>(path: string, opciones: Opciones = {}): Promise<T> {
   const headers: Record<string, string> = {};
+  const tiempoLimiteMs = opciones.tiempoLimiteMs ?? TIEMPO_LIMITE_MS;
 
   const usuario = auth.currentUser;
   if (usuario) {
-    headers["Authorization"] = `Bearer ${await conLimiteDeTiempo(usuario.getIdToken())}`;
+    headers["Authorization"] = `Bearer ${await conLimiteDeTiempo(usuario.getIdToken(), TIEMPO_LIMITE_MS)}`;
   }
 
-  if (opciones.body !== undefined) {
+  // FormData (subida de archivos) se manda tal cual: el navegador arma el
+  // Content-Type con el boundary correcto solo. Todo lo demas sigue siendo
+  // JSON, como hasta ahora.
+  const esFormData = opciones.body instanceof FormData;
+  if (opciones.body !== undefined && !esFormData) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -64,9 +73,10 @@ export async function apiFetch<T>(path: string, opciones: Opciones = {}): Promis
     fetch(`${BASE_URL}${path}`, {
       method: opciones.method || "GET",
       headers,
-      body: opciones.body !== undefined ? JSON.stringify(opciones.body) : undefined,
+      body: opciones.body === undefined ? undefined : esFormData ? (opciones.body as FormData) : JSON.stringify(opciones.body),
       signal: controlador.signal,
     }),
+    tiempoLimiteMs,
     () => controlador.abort(),
   );
 

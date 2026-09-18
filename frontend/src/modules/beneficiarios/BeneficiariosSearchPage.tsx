@@ -10,6 +10,7 @@ import {
 import type { Beneficiario, BeneficiarioSinDocumento, NuevoBeneficiario } from "./types";
 import { MensajeError } from "../../components/EstadoCarga";
 import { useGeolocalizacion } from "../../hooks/useGeolocalizacion";
+import { IconoBeneficiarios, IconoDocumento, IconoUsuarioSinDoc } from "../../components/iconosApp";
 
 const CAMPOS_INICIALES: NuevoBeneficiario = {
   tipo_documento: "CC",
@@ -143,12 +144,26 @@ export function BeneficiariosSearchPage() {
 
   return (
     <div>
-      <h1>Beneficiarios</h1>
+      <div className="pagina-encabezado">
+        <div>
+          <h1>Beneficiarios</h1>
+          <p className="texto-secundario" style={{ margin: 0 }}>
+            Administra la información de las personas que hacen parte de los programas.
+          </p>
+        </div>
+        <span className="pagina-encabezado__chip">
+          <IconoBeneficiarios /> Personas que construyen el cambio en Urabá
+        </span>
+      </div>
 
-      <div className="tarjeta">
+      <div className="tarjeta tarjeta-con-icono">
+        <div className="tarjeta-con-icono__icono tarjeta-con-icono__icono--azul">
+          <IconoDocumento />
+        </div>
+        <div className="tarjeta-con-icono__cuerpo">
         <h2>Buscar por documento</h2>
         <p className="texto-secundario">
-          Siempre busca antes de registrar, para no crear una persona duplicada.
+          Consulta si una persona ya está registrada en el sistema, o crea un nuevo registro.
         </p>
         <form className="formulario" onSubmit={manejarBusqueda}>
           <div className="fila-campos">
@@ -178,13 +193,22 @@ export function BeneficiariosSearchPage() {
             </button>
           </div>
         </form>
+        </div>
       </div>
 
-      <div className="tarjeta">
+      <div className="tarjeta tarjeta-con-icono">
+        <div className="tarjeta-con-icono__icono tarjeta-con-icono__icono--verde">
+          <IconoUsuarioSinDoc />
+        </div>
+        <div className="tarjeta-con-icono__cuerpo">
         <h2>Beneficiarios sin documento</h2>
         <p className="texto-secundario">
-          Para personas que no tienen ningun documento de identidad con que buscarlas.
+          Personas que aún no tienen ningún documento de identidad con qué buscarlas.
         </p>
+        <div className="callout-info">
+          Si la persona no cuenta con un documento de identidad, puedes registrarla manualmente para continuar
+          con su vinculación a los programas.
+        </div>
         <div className="acciones">
           <button type="button" className="secundario" onClick={iniciarRegistroSinDocumento}>
             Registrar usuario sin documento
@@ -223,6 +247,7 @@ export function BeneficiariosSearchPage() {
             </ul>
           )
         )}
+        </div>
       </div>
 
       {encontrado && (
