@@ -1,0 +1,661 @@
+<title>Urabá País</title>
+<style>
+  :root {
+    --papel: #faf8f4;
+    --papel-alto: #ffffff;
+    --tinta: #1c2420;
+    --tinta-tenue: #5b6660;
+    --linea: #e1ddd2;
+    --linea-fuerte: #c9c2b0;
+    --azul: #1d4e89;
+    --azul-oscuro: #123253;
+    --azul-tenue: #eaf0f7;
+    --verde: #2e7d54;
+    --verde-tenue: #e9f3ec;
+    --ambar: #9a6a00;
+    --ambar-tenue: #fbf1dc;
+    --codigo-bg: #f1ede2;
+    --sombra: 0 1px 2px rgba(28, 36, 32, 0.06);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --papel: #14181c;
+      --papel-alto: #1b2126;
+      --tinta: #e9ece7;
+      --tinta-tenue: #9aa39c;
+      --linea: #2b3238;
+      --linea-fuerte: #3a434b;
+      --azul: #6fa1de;
+      --azul-oscuro: #9dc0ec;
+      --azul-tenue: #1c2b3d;
+      --verde: #7fc39d;
+      --verde-tenue: #182821;
+      --ambar: #e0b455;
+      --ambar-tenue: #2c2513;
+      --codigo-bg: #20262b;
+      --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --papel: #14181c;
+    --papel-alto: #1b2126;
+    --tinta: #e9ece7;
+    --tinta-tenue: #9aa39c;
+    --linea: #2b3238;
+    --linea-fuerte: #3a434b;
+    --azul: #6fa1de;
+    --azul-oscuro: #9dc0ec;
+    --azul-tenue: #1c2b3d;
+    --verde: #7fc39d;
+    --verde-tenue: #182821;
+    --ambar: #e0b455;
+    --ambar-tenue: #2c2513;
+    --codigo-bg: #20262b;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  @font-face {
+    font-family: "Source Serif";
+    src: local("Source Serif 4");
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--papel);
+    color: var(--tinta);
+    font: 16px/1.65 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    margin: 0;
+  }
+
+  ::selection { background: var(--azul-tenue); }
+
+  .barra {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: color-mix(in srgb, var(--papel) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--linea);
+  }
+
+  .barra__fila {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .barra__fila::-webkit-scrollbar { display: none; }
+
+  .barra__marca {
+    font-family: "Source Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--azul);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .barra__nav { display: flex; gap: 14px; }
+  .barra__nav a {
+    font-size: 0.8rem;
+    color: var(--tinta-tenue);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 4px 2px;
+    border-bottom: 1px solid transparent;
+  }
+  .barra__nav a:hover { color: var(--azul); border-bottom-color: var(--azul); }
+
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px 90px;
+  }
+
+  .portada {
+    padding: 56px 0 40px;
+    border-bottom: 1px solid var(--linea);
+    margin-bottom: 46px;
+  }
+
+  .portada__etiqueta {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--azul);
+    background: var(--azul-tenue);
+    padding: 5px 11px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+
+  h1.portada__titulo {
+    font-family: "Source Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 6vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    color: var(--tinta);
+  }
+
+  .portada__sub {
+    font-size: 1.05rem;
+    color: var(--tinta-tenue);
+    max-width: 60ch;
+    margin: 0 0 22px;
+  }
+
+  .portada__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    font-size: 0.82rem;
+    color: var(--tinta-tenue);
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .portada__meta strong { color: var(--tinta); font-weight: 600; }
+
+  section { margin-bottom: 52px; scroll-margin-top: 64px; }
+
+  .seccion__cabecera {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .seccion__num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--azul);
+    background: var(--azul-tenue);
+    border-radius: 6px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
+
+  h2 {
+    font-family: "Source Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--tinta);
+  }
+
+  h3 {
+    font-family: "Source Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.12rem;
+    margin: 30px 0 10px;
+    color: var(--tinta);
+  }
+
+  p { margin: 0 0 14px; }
+  section > p:first-of-type { margin-top: 0; }
+
+  .lead {
+    font-size: 1.05rem;
+    color: var(--tinta);
+  }
+
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.86em;
+    background: var(--codigo-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 5px;
+  }
+
+  .tabla-envoltorio {
+    overflow-x: auto;
+    border: 1px solid var(--linea);
+    border-radius: 10px;
+    margin: 4px 0 22px;
+  }
+
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; background: var(--papel-alto); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  thead th {
+    background: var(--azul-tenue);
+    color: var(--azul-oscuro);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono, th.mono { font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; }
+
+  .tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin: 4px 0 22px;
+  }
+
+  .tarjeta {
+    border: 1px solid var(--linea);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: var(--papel-alto);
+    box-shadow: var(--sombra);
+  }
+  .tarjeta h4 {
+    margin: 0 0 6px;
+    font-size: 0.95rem;
+    font-family: "Source Serif", Georgia, serif;
+    color: var(--tinta);
+  }
+  .tarjeta p { margin: 0; font-size: 0.86rem; color: var(--tinta-tenue); }
+
+  .pill {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+  }
+  .pill--verde { background: var(--verde-tenue); color: var(--verde); }
+  .pill--azul { background: var(--azul-tenue); color: var(--azul); }
+  .pill--ambar { background: var(--ambar-tenue); color: var(--ambar); }
+
+  .callout {
+    border-left: 3px solid var(--azul);
+    background: var(--azul-tenue);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    color: var(--tinta);
+    margin: 4px 0 22px;
+  }
+  .callout--ambar { border-left-color: var(--ambar); background: var(--ambar-tenue); }
+  .callout strong { display: block; margin-bottom: 3px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .roles {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 4px 0 22px;
+  }
+
+  .rol {
+    border: 1px solid var(--linea);
+    border-radius: 12px;
+    padding: 18px 20px;
+    background: var(--papel-alto);
+    box-shadow: var(--sombra);
+  }
+
+  .rol__cabecera { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .rol__nombre { font-family: "Source Serif", Georgia, serif; font-size: 1.05rem; font-weight: 600; }
+  .rol__como { font-size: 0.78rem; color: var(--tinta-tenue); font-family: "IBM Plex Mono", monospace; }
+
+  .rol ul { margin: 0; padding-left: 20px; font-size: 0.88rem; }
+  .rol ul li { margin-bottom: 5px; }
+  .rol .no-ve { color: var(--tinta-tenue); }
+
+  .mermaid { margin: 4px 0 26px; }
+
+  .pie {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--linea);
+    font-size: 0.78rem;
+    color: var(--tinta-tenue);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    .portada { padding: 40px 0 30px; }
+    .rol__cabecera { flex-direction: column; align-items: flex-start; gap: 4px; }
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="barra">
+  <div class="barra__fila">
+    <span class="barra__marca">Urabá País</span>
+    <nav class="barra__nav">
+      <a href="#resumen">Resumen</a>
+      <a href="#requerimientos">Requerimientos</a>
+      <a href="#arquitectura">Arquitectura</a>
+      <a href="#datos">Datos</a>
+      <a href="#roles">Usuarios</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+  <header class="portada">
+    <span class="portada__etiqueta">Descripción de la solución</span>
+    <h1 class="portada__titulo">Registro y seguimiento de beneficiarios en Urabá</h1>
+    <p class="portada__sub">
+      Prototipo web para el flujo Registro → Vinculación → Atención/Ayuda → Seguimiento → Reporte,
+      construido para el reto URABÁ-PAÍS. Este documento resume qué se implementó, cómo está
+      construido, qué datos maneja y qué ve cada tipo de usuario.
+    </p>
+    <div class="portada__meta">
+      <span><strong>Stack</strong> Node.js · Express · Firestore · React · TypeScript</span>
+      <span><strong>Estado</strong> Prototipo funcional</span>
+    </div>
+  </header>
+
+  <section id="resumen">
+    <div class="seccion__cabecera">
+      <span class="seccion__num">01</span>
+      <h2>Resumen</h2>
+    </div>
+    <p class="lead">
+      La solución organiza toda la información alrededor de una única unidad: el beneficiario.
+      Una misma persona puede participar en varios programas y recibir distintas atenciones,
+      ayudas o seguimientos a lo largo del tiempo, pero conserva un solo registro y un código
+      interno inmutable, evitando duplicados y dispersión de su historial.
+    </p>
+    <p>
+      El sistema cubre el flujo completo pedido en la guía del reto: se busca a la persona antes
+      de registrarla, se le vincula a uno o varios programas con su propio estado, se registran las
+      atenciones o ayudas que recibe y los seguimientos de su caso, y toda esa información se
+      consolida en una ficha única y en indicadores agregados para la toma de decisiones —
+      siempre con datos ficticios o anonimizados y sin exponer información personal en pantallas
+      o reportes públicos.
+    </p>
+  </section>
+
+  <section id="requerimientos">
+    <div class="seccion__cabecera">
+      <span class="seccion__num">02</span>
+      <h2>Requerimientos atendidos</h2>
+    </div>
+
+    <h3>Los cuatro módulos obligatorios</h3>
+    <div class="tabla-envoltorio">
+      <table>
+        <thead>
+          <tr><th>Módulo</th><th>Qué hace la solución</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Beneficiarios y familias</strong></td>
+            <td>Búsqueda obligatoria por tipo y número de documento antes de crear un registro; si ya
+              existe, se bloquea el duplicado y se abre la ficha existente. Cada persona recibe un
+              <code>codigo_interno</code> único e inmutable. Se puede registrar, consultar y editar
+              datos básicos, y relacionar al menos un integrante familiar. Incluye un flujo aparte
+              para personas sin documento de identidad.</td>
+          </tr>
+          <tr>
+            <td><strong>2. Programas y participación</strong></td>
+            <td>Un beneficiario se vincula a uno o varios programas, cada vinculación con su propia
+              fecha y estado (<code>inscrito</code>, <code>en_proceso</code>, <code>finalizado</code>,
+              <code>retirado</code>), sin duplicar a la persona.</td>
+          </tr>
+          <tr>
+            <td><strong>3. Atención y seguimiento</strong></td>
+            <td>Registro de atenciones/ayudas ya entregadas (tipo, fecha, descripción, responsable,
+              resultado) y de seguimientos del caso (avance o novedad, observación, acción pendiente,
+              próximo contacto), con evidencia fotográfica opcional adjunta a cada registro.</td>
+          </tr>
+          <tr>
+            <td><strong>4. Consultas y reportes</strong></td>
+            <td>Ficha consolidada por beneficiario (datos, familia, programas, historial completo) y
+              tablero con cuatro indicadores dinámicos y agregados — sin datos personales
+              identificables — exportable a PDF.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Componentes complementarios implementados</h3>
+    <div class="tarjetas">
+      <div class="tarjeta">
+        <span class="pill pill--verde">Acceso y roles</span>
+        <h4>Autenticación con Firebase</h4>
+        <p>Dos roles, <code>administrador</code> y <code>encuestador</code>. El rol se auto-asigna como
+          encuestador al primer ingreso; administrador solo se otorga a mano en la consola.</p>
+      </div>
+      <div class="tarjeta">
+        <span class="pill pill--verde">Sección pública</span>
+        <h4>Página informativa del proyecto</h4>
+        <p>Misión, líneas de trabajo, cómo acceder a un programa y canales de contacto, visible sin
+          iniciar sesión y sin ningún dato personal.</p>
+      </div>
+      <div class="tarjeta">
+        <span class="pill pill--verde">Inteligencia artificial</span>
+        <h4>Asistente conversacional</h4>
+        <p>Resume historiales, busca beneficiarios y lee indicadores usando las mismas rutas
+          autenticadas del backend. No diagnostica ni decide; solo administradores lo ven.</p>
+      </div>
+      <div class="tarjeta">
+        <span class="pill pill--verde">Exportación</span>
+        <h4>Reportes en PDF</h4>
+        <p>El tablero de indicadores se descarga como PDF con la gráfica incluida.</p>
+      </div>
+    </div>
+
+    <h3>Extensiones no pedidas en la guía</h3>
+    <div class="tarjetas">
+      <div class="tarjeta">
+        <span class="pill pill--azul">Evidencia fotográfica</span>
+        <h4>Fotos por atención/seguimiento</h4>
+        <p>Se pueden adjuntar una o más fotos a un registro ya creado, almacenadas en Cloudinary; el
+          backend nunca expone sus credenciales al navegador.</p>
+      </div>
+      <div class="tarjeta">
+        <span class="pill pill--azul">Modo sin conexión</span>
+        <h4>PWA con sincronización</h4>
+        <p>Beneficiarios, atenciones y seguimientos se pueden registrar sin internet; quedan en una
+          cola local y se sincronizan solos al recuperar conexión.</p>
+      </div>
+      <div class="tarjeta">
+        <span class="pill pill--azul">Geolocalización</span>
+        <h4>Coordenadas al registrar</h4>
+        <p>Captura opcional de latitud/longitud del dispositivo al crear un beneficiario nuevo.</p>
+      </div>
+    </div>
+
+    <div class="callout callout--ambar">
+      <strong>Fuera de alcance por ahora</strong>
+      Accesibilidad ampliada más allá de lo básico, reglas de conteo avanzado por resultado o
+      actividad, y detección automática de duplicados sin documento (hoy requiere validación manual).
+    </div>
+  </section>
+
+  <section id="arquitectura">
+    <div class="seccion__cabecera">
+      <span class="seccion__num">03</span>
+      <h2>Arquitectura</h2>
+    </div>
+    <p>
+      Arquitectura cliente-servidor clásica: un frontend de una sola página que habla por HTTP con un
+      backend propio, que es el único componente con acceso a la base de datos y a los servicios
+      externos. Ni Cloudinary ni OpenAI reciben datos de beneficiarios directamente del navegador.
+    </p>
+
+    <pre class="mermaid">
+flowchart LR
+  U["Navegador (React SPA)"] -->|"HTTPS + ID token Firebase"| API["Backend Express (Node.js)"]
+  U -->|"login / sesión"| FBAuth["Firebase Authentication"]
+  API -->|"lee / escribe"| FS[("Firestore")]
+  API -->|"sube foto de evidencia"| CLD["Cloudinary"]
+  API -->|"herramientas del asistente"| API
+  API -->|"razona sobre los datos ya obtenidos"| AI["OpenAI (gpt-4o-mini)"]
+  U -. "PWA: cola local sin conexión" .-> IDB[("IndexedDB")]
+  IDB -. "sincroniza al volver la conexión" .-> API
+    </pre>
+
+    <h3>Backend</h3>
+    <ul>
+      <li><strong>Node.js + Express</strong>, organizado por módulo (<code>routes/</code> →
+        <code>controllers/</code>), con <code>Firestore</code> (Firebase Admin SDK) como única base
+        de datos.</li>
+      <li><strong>Autenticación</strong>: cada request de escritura exige un ID token de Firebase
+        Authentication válido (<code>middleware/auth.js</code>); los indicadores y el asistente
+        además exigen rol <code>administrador</code>, verificado contra Firestore en cada llamada.</li>
+      <li><strong>Evidencia fotográfica</strong>: <code>multer</code> recibe el archivo en memoria y
+        lo sube a <strong>Cloudinary</strong>; solo la URL resultante se guarda en Firestore.</li>
+      <li><strong>Asistente de IA</strong>: <strong>LangChain.js</strong> sobre un modelo de
+        <strong>OpenAI</strong> configurable (por defecto <code>gpt-4o-mini</code>). Sus
+        "herramientas" son las propias rutas internas del backend, llamadas con el token del usuario
+        que pregunta — nunca toca Firestore directamente ni tiene permisos propios.</li>
+    </ul>
+
+    <h3>Frontend</h3>
+    <ul>
+      <li><strong>React 19 + TypeScript</strong> sobre <strong>Vite</strong>, con
+        <code>react-router-dom</code> para las rutas y una vista distinta según haya o no sesión
+        iniciada.</li>
+      <li><strong>Progressive Web App</strong>: un service worker (<code>vite-plugin-pwa</code>)
+        precachea la aplicación y <code>IndexedDB</code> (librería <code>idb</code>) guarda una copia
+        local de cada ficha y una cola de operaciones pendientes cuando no hay conexión.</li>
+      <li><strong>Google Maps JavaScript API</strong> para la captura de ubicación al registrar un
+        beneficiario.</li>
+    </ul>
+  </section>
+
+  <section id="datos">
+    <div class="seccion__cabecera">
+      <span class="seccion__num">04</span>
+      <h2>Estructura de datos</h2>
+    </div>
+    <p>
+      Firestore es una base documental: <code>beneficiarios</code>, <code>programas</code> y
+      <code>usuarios</code> son colecciones de nivel raíz; familiares, participaciones, atenciones y
+      seguimientos viven como <strong>subcolecciones dentro de cada beneficiario</strong>, para que
+      todo su historial quede agrupado bajo un mismo documento padre.
+    </p>
+
+    <pre class="mermaid">
+flowchart TD
+  B["beneficiarios/{id}"] --> F["familiares/{id}"]
+  B --> P["participaciones/{id}"]
+  B --> A["atenciones/{id}"]
+  B --> S["seguimientos/{id}"]
+  PR["programas/{id}"] -. "programa_id" .-> P
+  US["usuarios/{uid}"] -. "rol" .-> B
+    </pre>
+
+    <h3>beneficiarios/{id}</h3>
+    <div class="tabla-envoltorio">
+      <table>
+        <thead><tr><th class="mono">campo</th><th>tipo</th><th>notas</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">codigo_interno</td><td>string</td><td>generado por el servidor, único e inmutable (<code>BEN-XXXXXXXX</code>)</td></tr>
+          <tr><td class="mono">tipo_documento / numero_documento</td><td>string</td><td>clave de búsqueda para evitar duplicados</td></tr>
+          <tr><td class="mono">nombres</td><td>string</td><td>obligatorio</td></tr>
+          <tr><td class="mono">sexo, edad, municipio, zona</td><td>string / number | null</td><td>opcionales</td></tr>
+          <tr><td class="mono">contacto, nacionalidad, tipo_poblacion</td><td>string | null</td><td>opcionales</td></tr>
+          <tr><td class="mono">autorizacion_datos</td><td>boolean</td><td>consentimiento de tratamiento de datos</td></tr>
+          <tr><td class="mono">fecha_autorizacion</td><td>string | null</td><td>fecha del consentimiento</td></tr>
+          <tr><td class="mono">lat, lng</td><td>number | null</td><td>geolocalización opcional al registrar</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Subcolecciones de un beneficiario</h3>
+    <div class="tabla-envoltorio">
+      <table>
+        <thead><tr><th>Subcolección</th><th>Campos</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">familiares</td><td>nombres, parentesco, fecha_nacimiento</td></tr>
+          <tr><td class="mono">participaciones</td><td>programa_id, organizacion, fecha_vinculacion, estado (<code>inscrito</code> · <code>en_proceso</code> · <code>finalizado</code> · <code>retirado</code>)</td></tr>
+          <tr><td class="mono">atenciones</td><td>tipo (<code>Ayuda</code> · <code>Atención</code>), fecha, descripcion, responsable, resultado, evidencias (URLs de Cloudinary)</td></tr>
+          <tr><td class="mono">seguimientos</td><td>fecha, avance_novedad, observacion, accion_pendiente, proximo_contacto, evidencias</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Otras colecciones</h3>
+    <div class="tabla-envoltorio">
+      <table>
+        <thead><tr><th class="mono">colección</th><th>campos</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">programas/{id}</td><td>nombre, linea_trabajo</td></tr>
+          <tr><td class="mono">usuarios/{uid}</td><td>rol (<code>administrador</code> · <code>encuestador</code>), email</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="roles">
+    <div class="seccion__cabecera">
+      <span class="seccion__num">05</span>
+      <h2>Tipos de usuario</h2>
+    </div>
+    <p>
+      Hay tres niveles de acceso. La separación no es solo visual: el backend exige el rol correcto
+      en cada endpoint (<code>requireAuth</code> / <code>requireAdmin</code>), así que ocultar un
+      botón en la pantalla no es lo único que protege un dato.
+    </p>
+
+    <div class="roles">
+      <div class="rol">
+        <div class="rol__cabecera">
+          <span class="rol__nombre">Visitante público</span>
+          <span class="rol__como">sin sesión iniciada</span>
+        </div>
+        <ul>
+          <li>Ve la página de inicio del proyecto: misión, líneas de trabajo, cómo acceder a un
+            programa, impacto esperado y canales de contacto.</li>
+          <li class="no-ve">No ve ningún dato de beneficiarios ni cifras internas. Un único botón:
+            iniciar sesión.</li>
+        </ul>
+      </div>
+
+      <div class="rol">
+        <div class="rol__cabecera">
+          <span class="rol__nombre">Encuestador</span>
+          <span class="rol__como">usuarios/{uid}.rol = "encuestador" · asignado automático al primer ingreso</span>
+        </div>
+        <ul>
+          <li>Buscar, registrar y editar beneficiarios; evitar duplicados por documento.</li>
+          <li>Registrar familiares y vincular a programas.</li>
+          <li>Registrar atenciones, ayudas y seguimientos, con evidencia fotográfica.</li>
+          <li>Consultar la ficha consolidada de cualquier beneficiario.</li>
+          <li class="no-ve">No ve el tablero de indicadores agregados ni el asistente de IA.</li>
+        </ul>
+      </div>
+
+      <div class="rol">
+        <div class="rol__cabecera">
+          <span class="rol__nombre">Administrador</span>
+          <span class="rol__como">usuarios/{uid}.rol = "administrador" · se otorga solo a mano en Firestore</span>
+        </div>
+        <ul>
+          <li>Todo lo que puede hacer un encuestador.</li>
+          <li>Tablero de indicadores agregados (beneficiarios únicos, participaciones por programa,
+            atenciones registradas, seguimientos con acción pendiente), exportable a PDF.</li>
+          <li>Asistente virtual de IA para resumir historiales y consultar indicadores por chat.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="pie">
+    <span>Urabá País — prototipo para el reto URABÁ-PAÍS</span>
+    <span>Datos de ejemplo, ficticios o anonimizados en toda demostración</span>
+  </div>
+
+</main>

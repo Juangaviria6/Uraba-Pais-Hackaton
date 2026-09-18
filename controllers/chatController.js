@@ -22,6 +22,9 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const SITIOS_FUNDACIONES = {
   coopi: "https://www.coopi.org",
   hias: "https://hias.org",
+  fadv: "https://fadvcolombia.org/",
+  hi: "https://hi-lac.org/"
+
   // agrega aqui los dominios reales de las demas fundaciones (FADV, HI, etc.)
 };
 
